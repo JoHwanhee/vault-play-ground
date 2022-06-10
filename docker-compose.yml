@@ -1,5 +1,20 @@
 version: "3.8"
 services:
+  proxy:
+    container_name: proxy
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./appdata/conf.d:/etc/nginx/conf.d
+      - ./appdata/certbot/conf:/etc/letsencrypt
+      - ./appdata/certbot/data:/var/www/certbot
+      - ./www/:/var/www/
+    networks:
+      - vault-network
+
   vault-server:
     image: vault:latest
     ports:
@@ -21,6 +36,18 @@ services:
       - ./vault/data:/vault/data
       - ./vault/policies:/vault/policies
     entrypoint: vault server -config=/vault/config/vault.json
+   
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    command: certonly --webroot --webroot-path=/var/www/certbot --email chohh@trevari.co.kr --agree-tos --no-eff-email -d vault.trevari.co.kr
+    volumes:
+      - ./appdata/certbot/conf:/etc/letsencrypt
+      - ./appdata/certbot/logs:/var/log/letsencrypt
+      - ./appdata/certbot/data:/var/www/certbot
+    depends_on:
+      - proxy
+
 networks:
   vault-network:
     ipam:
