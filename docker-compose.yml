@@ -4,6 +4,10 @@ services:
     image: vault:latest
     ports:
       - "8200:8200"
+    environment:
+      - VAULT_ADDR=http://172.21.0.10:8200
+      - VAULT_API_ADDR=http://172.21.0.10:8200
+      - VAULT_ADDRESS=http://172.21.0.10:8200
     cap_add:
       - IPC_LOCK
     platform: linux/x86_64
@@ -17,6 +21,17 @@ services:
       - ./vault/data:/vault/data
       - ./vault/policies:/vault/policies
     entrypoint: vault server -config=/vault/config/vault.json
+
+  vault-client:
+    build: .
+    environment:
+      VAULT_ADDR: "http://vault-server:8200"
+    platform: linux/x86_64
+    networks:
+      vault-network:
+        ipv4_address: 172.21.0.20
+        aliases:
+          - vault-client
 networks:
   vault-network:
     ipam:
